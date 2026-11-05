@@ -94,3 +94,5 @@ pacman-conf --repo-list
 For an update that stopped, add the update output and `/var/log/pacman.log`. For an installer that stopped, add the app's log folder under `~/Library/Logs/`.
 
 Never post passwords, Wi-Fi credentials, private keys or complete connection profiles.
+
+The J514M/T6034 readiness qualification package waits for the native display and GPU before SDDM starts. It waits at most 30 seconds, settles device discovery for at most 10 more seconds, and allows login even when native devices do not appear. It requires no boot enable flag and changes no graphics, audio, networking or Touch ID settings. This package candidate is awaiting cold-boot qualification before release.
