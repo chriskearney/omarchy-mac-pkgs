@@ -37,11 +37,23 @@ parameter
 APPLE=0 timeout 2 "$helper" || fail 'other platforms never enter the J514C wait'
 waiting 'J514C waits for native graphics without an enable parameter'
 parameter
+compatibility apple,j514m apple,t6034
+APPLE=0 timeout 2 "$helper" || fail 'other platforms never enter the J514M wait'
+waiting 'J514M waits for native graphics without an enable parameter'
 compatibility apple,j514c apple,t6034
 timeout 2 "$helper" || fail 'J514C name on another SoC never enters native wait'
+compatibility apple,j514m apple,t6031
+timeout 2 "$helper" || fail 'J514M name on another SoC never enters native wait'
+compatibility apple,j516m apple,t6034
+timeout 2 "$helper" || fail 'another T6034 board never enters native wait'
 compatibility apple,j516c apple,t6031
 timeout 2 "$helper" || fail 'another T6031 board never enters native wait'
-compatibility apple,j514c apple,t6031
+mkdir -p "$work/proc/device-tree/soc/display-subsystem" "$work/dev/dri/by-path"
+waiting 'other boards retain the existing display wait'
+touch "$work/dev/dri/by-path/platform-soc:display-subsystem-card"
+timeout 2 "$helper" || fail 'the existing display path still permits other boards'
+rmdir "$work/proc/device-tree/soc/display-subsystem"
+compatibility apple,j514m apple,t6034
 pass 'exact board, SoC and platform gates; no enable parameter'
 
 driver card0 simpledrm
@@ -58,6 +70,12 @@ touch "$work/dev/dri/renderD128"
 SETTLE_STATUS=1 timeout 2 "$helper" >"$work/output" || fail 'settle failure never fails the greeter'
 grep -q 'native_display=true native_gpu=true' "$work/output" || fail 'native readiness is logged'
 [[ -s $SETTLE_LOG ]] || fail 'ready devices pass through bounded udev settle'
+for pair in 'J514C apple,j514c apple,t6031' 'J514M apple,j514m apple,t6034'; do
+  read -r board model soc <<<"$pair"
+  compatibility "$model" "$soc"
+  timeout 2 "$helper" >"$work/output" || fail "$board native graphics permits the greeter"
+  grep -q "$board graphics readiness: native_display=true native_gpu=true" "$work/output" || fail "$board readiness names the actual board"
+done
 pass 'native driver and device checks; bounded settle is nonfatal'
 
 rm "$work/dev/dri/renderD128"

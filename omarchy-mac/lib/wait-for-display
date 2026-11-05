@@ -1,6 +1,6 @@
 #!/bin/bash
 # Let Apple's native display replace simpledrm before the greeter opens its VT.
-# Keep the existing 10 s wait on other Macs; J514C also needs its native GPU.
+# Keep the existing 10 s wait on other Macs; J514C/J514M also need their native GPU.
 # A timeout never fails the greeter.
 omarchy-hw-apple-silicon || exit 0
 proc=/proc
@@ -27,8 +27,16 @@ native_ready() {
   [[ $native_display == "true" && $native_gpu == "true" ]]
 }
 
+native_board=
 if grep -zqx 'apple,j514c' "$proc/device-tree/compatible" 2>/dev/null &&
   grep -zqx 'apple,t6031' "$proc/device-tree/compatible" 2>/dev/null; then
+  native_board=J514C
+elif grep -zqx 'apple,j514m' "$proc/device-tree/compatible" 2>/dev/null &&
+  grep -zqx 'apple,t6034' "$proc/device-tree/compatible" 2>/dev/null; then
+  native_board=J514M
+fi
+
+if [[ -n $native_board ]]; then
   started=$SECONDS
   deadline=$((SECONDS + 30))
   while (( SECONDS < deadline )); do
@@ -38,8 +46,8 @@ if grep -zqx 'apple,j514c' "$proc/device-tree/compatible" 2>/dev/null &&
     fi
     sleep 0.05
   done
-  printf 'J514C graphics readiness: native_display=%s native_gpu=%s wait_seconds=%s\n' \
-    "$native_display" "$native_gpu" "$((SECONDS - started))"
+  printf '%s graphics readiness: native_display=%s native_gpu=%s wait_seconds=%s\n' \
+    "$native_board" "$native_display" "$native_gpu" "$((SECONDS - started))"
 else
   # Connectors are no test: simpledrm has one, and so does the GPU's own card.
   if [[ -e $proc/device-tree/soc/display-subsystem ]]; then
